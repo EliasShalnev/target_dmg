@@ -19,13 +19,12 @@ public:
 
     virtual bool isActive() const = 0;
 
-    virtual geometry_msgs::Point::ConstPtr getCoordinates() const = 0;
+    // virtual geometry_msgs::Point::ConstPtr getCoordinates() const = 0;
 
-    virtual geometry_msgs::Vector3::ConstPtr getMovementSpeed() const = 0;
+    // virtual geometry_msgs::Vector3::ConstPtr getMovementSpeed() const = 0;
 
 protected:
     ros::NodeHandle m_nh;
     const ModelName m_modelName;
-    SubMonitor<gazebo_msgs::ModelStates> m_modelStates;
 };
 

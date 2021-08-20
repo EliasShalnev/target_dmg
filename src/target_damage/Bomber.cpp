@@ -2,24 +2,26 @@
 
 #include <cmath>
 
-Bomber::Bomber(const BomberName& bomberName)
+
+
+Bomber::Bomber(const BomberName& bomberName, Observer& observer)
     : Model(bomberName)
+    , m_observer(observer)
     , m_cooridnates(m_nh, "mavros/local_position/pose", 10)
     , m_movementSpeed(m_nh, "mavros/local_position/velocity_local", 10)
+    , m_uavState(m_nh, "mavros/state", 10)
+    , m_dropPoint( m_nh.subscribe<geometry_msgs::Point>
+                   ("drop_point", 10, &Bomber::dropPointCallback, this) )
 { }
 
 
-bool Bomber::isActive() const 
+bool Bomber::isActive() const
 {
-    for(auto model : m_modelStates.getMessage()->name)
-    {
-        if(model == m_modelName) { return true; }
-    }
-    return false;
+    return m_uavState.getMessage()->armed;
 }
 
 
-void Bomber::getDropPoint() 
+geometry_msgs::Point::ConstPtr Bomber::evalHitPoint(const geometry_msgs::Point::ConstPtr& dropPoint) 
 {
     //Bomb parameters
     const double kk = 0.4; //коэффициент формы(шар) из книги
@@ -62,7 +64,7 @@ void Bomber::getDropPoint()
     {
         const double temp = std::pow(1-(L*height)/T0, (g*MM)/(R*L)-1);
         const double ro = (po*MM*temp)/(R*T0); //плотность воздуха
-        
+
         auto diff = windSpeed_x - uavSpeed_x;
         auto sign = std::signbit(diff) ? -1 : 1;
         const auto bombAccel_x = ( kk*s*ro*sign*std::pow(diff, 2) )/(2*m); //ускорение СГ c учетом воздушной среды по оси x
@@ -82,16 +84,23 @@ void Bomber::getDropPoint()
         height = height - bombSpeed_z*dt;
         fallTime = fallTime + dt;
     }
+
+    geometry_msgs::Point::Ptr hitPoint(new geometry_msgs::Point);
+    hitPoint->x = m_cooridnates.getMessage()->pose.position.x + dx;
+    hitPoint->y = m_cooridnates.getMessage()->pose.position.y + dy;
+
+    ROS_INFO_STREAM("Fall time:" << fallTime);
+    ROS_INFO_STREAM("Hit point x = " << hitPoint->x << " y = " << hitPoint->y);
+
+    return hitPoint;
 }
 
 
-geometry_msgs::Point::ConstPtr Bomber::getCoordinates() const 
+void Bomber::dropPointCallback(const geometry_msgs::Point::ConstPtr& dropPoint) 
 {
-
-}
-
-
-geometry_msgs::Vector3::ConstPtr Bomber::getMovementSpeed() const 
-{
+    //TODO - uncomment
+    // if( !isActive() ) { return; }
+    auto hitPoint = evalHitPoint(dropPoint);
+    m_observer.evalDamage(hitPoint);
 
 }

@@ -32,17 +32,25 @@ public:
      */
     bool isActive() const override;
 
-    geometry_msgs::Point::ConstPtr getCoordinates() const override;
-
-    geometry_msgs::Vector3::ConstPtr getMovementSpeed() const override;
+    void evalDamage(const geometry_msgs::Point::ConstPtr& hitPoint);
 
 private:
-    SubMonitor<target_dmg::TargetDamage> m_currentDamage;
+    geometry_msgs::Point::ConstPtr getCoordinates() const;
+
+    geometry_msgs::Vector3::ConstPtr getMovementSpeed() const;
+
+private:
+    SubMonitor<gazebo_msgs::ModelStates> m_modelStates;
+
+    SubMonitor<target_dmg::TargetDamage> m_damageSub;
     class Damage
     {
     public:
         Damage(TargetName targetName);
         ~Damage() = default;
+
+        double getDamage() const { return m_currentDamage; }
+        void setDamage(const double& damage);
 
     private:
         void publishDamage(const ros::TimerEvent& event);
@@ -51,6 +59,6 @@ private:
         ros::NodeHandle m_nh;
         ros::Publisher m_dmgPublisher;
         ros::Timer m_publisherTimer;
-        float m_currentDamage = 0.0;
+        double m_currentDamage = 0.0;
     } m_damage;
 };

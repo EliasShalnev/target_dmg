@@ -20,6 +20,8 @@ public:
 
     uint32_t getNumPublishers() const { return m_subscriber.getNumPublishers(); }
 
+    std::string getTopic() const { return m_subscriber.getTopic(); } 
+
     /**
      * @brief Get last message that have published in subscribed topic
      * 

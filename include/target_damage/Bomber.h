@@ -2,8 +2,11 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/Point.h>
+#include <mavros_msgs/State.h>
 
 #include "target_damage/Model.h"
+#include "target_damage/Observer.h"
 
 class Bomber : public Model
 {
@@ -14,21 +17,23 @@ public:
     static constexpr char namePrefix[] = "bomber";
 
 public:
-    Bomber(const BomberName& bomberName);
+    Bomber(const BomberName& bomberName, Observer& observer);
     Bomber(const Bomber&) = delete;
     Bomber& operator=(const Bomber&) = delete;
     ~Bomber() = default;
 
     bool isActive() const override;
 
-    void getDropPoint();
+private:
+    geometry_msgs::Point::ConstPtr evalHitPoint(const geometry_msgs::Point::ConstPtr& dropPoint);
 
-    geometry_msgs::Point::ConstPtr getCoordinates() const override;
-
-    geometry_msgs::Vector3::ConstPtr getMovementSpeed() const override;
+    void dropPointCallback(const geometry_msgs::Point::ConstPtr& dropPoint);
 
 private:
+    Observer& m_observer;
     SubMonitor<geometry_msgs::PoseStamped> m_cooridnates;
     SubMonitor<geometry_msgs::TwistStamped> m_movementSpeed;
+    SubMonitor<mavros_msgs::State> m_uavState;
+    ros::Subscriber m_dropPoint;
 };
 

@@ -9,11 +9,13 @@
 #include "target_damage/Model.h"
 
 
-class ModelsObserver
+class Observer
 {
 public:
-    ModelsObserver();
-    ~ModelsObserver() = default;
+    Observer();
+    ~Observer() = default;
+
+    void evalDamage(const geometry_msgs::Point::ConstPtr& hitPoint);
 
 private:
     /**
@@ -23,13 +25,11 @@ private:
      */
     void checkRegisteredModels(const gazebo_msgs::ModelStates::ConstPtr& modelStates);
 
-    bool checkModel(const Model::ModelName& model,
-                    const std::string& modelPrefix,
-                    std::unordered_map<Model::ModelName, Model::ConstPtr>& modelStore) const;
+    void checkRegisteredNodes();
 
 private:
     ros::NodeHandle m_nh;
     ros::Subscriber m_modelStatesSub;
-    std::unordered_map<Model::ModelName, Model::ConstPtr> m_targets;
+    std::unordered_map<Model::ModelName, Model::Ptr> m_targets;
     std::unordered_map<Model::ModelName, Model::ConstPtr> m_bombers;
 };

@@ -9,6 +9,7 @@ add_compile_options(-std=c++17)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    mavros_msgs
     message_generation
 )
 
@@ -69,6 +70,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  mavros_msgs
 )
 
 ################################################
@@ -105,6 +107,7 @@ catkin_package(
 #  LIBRARIES target_dmg
  CATKIN_DEPENDS 
     roscpp
+    mavros_msgs
     message_runtime
 )
 
@@ -133,7 +136,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(target_damage
-                    src/target_damage/ModelsObserver.cpp
+                    src/target_damage/NSParser.cpp
+                    src/target_damage/Observer.cpp
                     src/target_damage/Model.cpp
                     src/target_damage/Target.cpp
                     src/target_damage/Bomber.cpp

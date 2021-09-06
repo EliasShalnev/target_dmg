@@ -1,6 +1,5 @@
 #include <ros/init.h>
 
-
 #include "target_damage/Observer.h"
 
 const std::string nodeName = "target_dmg";

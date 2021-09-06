@@ -17,14 +17,21 @@ public:
     Model& operator=(const Model&) = delete;
     virtual ~Model() = default;
 
-    virtual bool isActive() const = 0;
+    /**
+     * @brief Model assume to be active while model with "m_modelName" is published
+     *        in "/gazebo/model_states" topic
+     * 
+     * @return true is active
+     * @return false isn't active 
+     */
+    virtual bool isActive() const;
 
-    // virtual geometry_msgs::Point::ConstPtr getCoordinates() const = 0;
+    geometry_msgs::Point::ConstPtr getCoordinates() const;
 
-    // virtual geometry_msgs::Vector3::ConstPtr getMovementSpeed() const = 0;
+    geometry_msgs::Vector3::ConstPtr getMovementSpeed() const;
 
 protected:
-    ros::NodeHandle m_nh;
     const ModelName m_modelName;
+    ros::NodeHandle m_nh;
+    SubMonitor<gazebo_msgs::ModelStates> m_modelStates;
 };
-

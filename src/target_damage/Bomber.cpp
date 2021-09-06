@@ -2,16 +2,16 @@
 
 #include <cmath>
 
+#include "target_damage/Observer.h"
 
 
-Bomber::Bomber(const BomberName& bomberName, Observer& observer)
-    : Model(bomberName)
+Bomber::Bomber(const ModelName& modelName, const BomberName& bomberName, Observer& observer)
+    : Model(modelName)
+    , m_bomberName(bomberName)
     , m_observer(observer)
-    , m_cooridnates(m_nh, "mavros/local_position/pose", 10)
-    , m_movementSpeed(m_nh, "mavros/local_position/velocity_local", 10)
-    , m_uavState(m_nh, "mavros/state", 10)
+    , m_uavState(m_nh, "/" + bomberName + "/mavros/state", 10)
     , m_dropPoint( m_nh.subscribe<geometry_msgs::Point>
-                   ("drop_point", 10, &Bomber::dropPointCallback, this) )
+                   ("/" + bomberName + "/drop_point", 10, &Bomber::dropPointCallback, this) )
 { }
 
 
@@ -30,12 +30,11 @@ geometry_msgs::Point::ConstPtr Bomber::evalHitPoint(const geometry_msgs::Point::
 
     //Environment parameters
     const double g = 9.8;
-
     const uint32_t po = 101325; //атмосферное давление
     //TODO - брать откуда-то
-    float T0 = 293.15; //температура на уровне моря. (кельвины) 
+    const double T0 = 293.15; //температура на уровне моря. (кельвины) 
     const double L = 0.0065; //вертикальный градиент температуры
-    const double R = 8.31447; //универсальная газовая постоянная
+    const double R = 8.31446; //универсальная газовая постоянная
     const double MM = 0.0289652; //молярная масса сухого воздуха
 
     //TODO - hardcode get wind speed from gazebo plugin
@@ -43,12 +42,18 @@ geometry_msgs::Point::ConstPtr Bomber::evalHitPoint(const geometry_msgs::Point::
     const double windSpeed_y = 0; //скорость ветра по y
 
     //Bomber parameters
-    auto height = m_cooridnates.getMessage()->pose.position.z;
-    const auto uavSpeed_x = m_movementSpeed.getMessage()->twist.linear.x; //скорость самолета по оси х
-    const auto uavSpeed_y = m_movementSpeed.getMessage()->twist.linear.y; //скорость самолета по оси y
-    const auto uavSpeed_z = m_movementSpeed.getMessage()->twist.linear.z; //скорость самолета по оси z
+    auto height = getCoordinates()->z;
+    const auto uavSpeed_x = getMovementSpeed()->x; //скорость самолета по оси х
+    const auto uavSpeed_y = getMovementSpeed()->y; //скорость самолета по оси y
+    const auto uavSpeed_z = getMovementSpeed()->z; //скорость самолета по оси z
 
-    const auto time = std::sqrt(2*height/g); //приближенное время падения
+    ROS_INFO_STREAM("Bomber \"" << m_bomberName << "\" parameters:");
+    ROS_INFO_STREAM("- height: " << height);
+    ROS_INFO_STREAM("- linear speed x: " << uavSpeed_x);
+    ROS_INFO_STREAM("- linear speed y: " << uavSpeed_y);
+    ROS_INFO_STREAM("- linear speed z: " << uavSpeed_z);
+
+    // const auto time = std::sqrt(2*height/g); //приближенное время падения
 
     auto bombSpeed_x = uavSpeed_x; //скорость СГ по оси x
     auto bombSpeed_y = uavSpeed_y; //скорость СГ по оси y
@@ -66,31 +71,35 @@ geometry_msgs::Point::ConstPtr Bomber::evalHitPoint(const geometry_msgs::Point::
         const double ro = (po*MM*temp)/(R*T0); //плотность воздуха
 
         auto diff = windSpeed_x - uavSpeed_x;
-        auto sign = std::signbit(diff) ? -1 : 1;
+        auto sign = std::signbit(diff) ? -1.0 : 1.0;
         const auto bombAccel_x = ( kk*s*ro*sign*std::pow(diff, 2) )/(2*m); //ускорение СГ c учетом воздушной среды по оси x
 
         diff = windSpeed_y - uavSpeed_y;
-        sign = std::signbit(diff) ? -1 : 1;
+        sign = std::signbit(diff) ? -1.0 : 1.0;
         const auto bombAccel_y = ( kk*s*ro*sign*std::pow(diff, 2) )/(2*m); //ускорение СГ с учетом воздушной среды по оси y
 
         bombSpeed_x = bombSpeed_x + bombAccel_x*dt;
-        bombSpeed_y = bombSpeed_y + bombAccel_x*dt;
+        bombSpeed_y = bombSpeed_y + bombAccel_y*dt;
 
         dx = dx + bombSpeed_x*dt;
         dy = dy + bombSpeed_y*dt;
 
-        const auto air_forse = ( kk*s*ro*std::pow(uavSpeed_z, 2) )/(2*m); //сила сопротивления воздуха
+        const auto air_forse = ( kk*s*ro*std::pow(bombSpeed_z, 2) )/(2*m); //сила сопротивления воздуха
         bombSpeed_z = bombSpeed_z + (g - air_forse)*dt;
         height = height - bombSpeed_z*dt;
         fallTime = fallTime + dt;
     }
 
     geometry_msgs::Point::Ptr hitPoint(new geometry_msgs::Point);
-    hitPoint->x = m_cooridnates.getMessage()->pose.position.x + dx;
-    hitPoint->y = m_cooridnates.getMessage()->pose.position.y + dy;
+    
+    hitPoint->x = getCoordinates()->x + dx;
+    hitPoint->y = getCoordinates()->y + dy;
 
-    ROS_INFO_STREAM("Fall time:" << fallTime);
-    ROS_INFO_STREAM("Hit point x = " << hitPoint->x << " y = " << hitPoint->y);
+    ROS_INFO_STREAM("Bomb parameters:");
+    ROS_INFO_STREAM("- Drop point:" << " x=" << dropPoint->x 
+                                    << " y=" << dropPoint->y);
+    ROS_INFO_STREAM("- Fall time: " << fallTime);
+    ROS_INFO_STREAM("- Hit point: x=" << hitPoint->x << " y=" << hitPoint->y);
 
     return hitPoint;
 }
@@ -100,7 +109,7 @@ void Bomber::dropPointCallback(const geometry_msgs::Point::ConstPtr& dropPoint)
 {
     //TODO - uncomment
     // if( !isActive() ) { return; }
+  
     auto hitPoint = evalHitPoint(dropPoint);
     m_observer.evalDamage(hitPoint);
-
 }

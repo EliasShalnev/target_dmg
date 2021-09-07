@@ -101,13 +101,13 @@ std::vector<Bomber::BomberName> Observer::checkRegisteredNodes()
 
     for(auto node : nodes)
     {
-        NSParser nsParser(node);
+        const NSParser nsParser(node);
         if(nsParser.size() != 2) { continue; }
 
-        if( *(nsParser.end()-1) == std::string("mavros") ) { continue; }
+        if( *(nsParser.end()-1) != std::string("/mavros") ) { continue; }
         
         if(nsParser.begin()->find(Bomber::namePrefix) == std::string::npos) { continue; }
-        Bomber::BomberName bomberName = nsParser.begin()->erase(0, 1);
+        Bomber::BomberName bomberName = nsParser.begin()->substr(1);
         if( m_bombers.find(bomberName) != m_bombers.end() ) { continue; }
         
         foundBombers.emplace_back(bomberName);

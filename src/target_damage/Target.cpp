@@ -46,13 +46,14 @@ void Target::Damage::evalDamage(const geometry_msgs::Point::ConstPtr& targetCoor
 {
     const double B = 0.9; //поражающая способность
     const uint8_t R = 50; //радиус поражения
-    const double k = 2; //коэффициент поражения - чем больше это коэф, тем меньше поражение
+    const double k = 6; //коэффициент поражения - чем больше это коэф, тем меньше поражение
     constexpr double e = 2.71828; //экспонента
 
     const auto delta_x = hitPoint->x - targetCoord->x;
     const auto delta_y = hitPoint->y - targetCoord->y;
 
     const auto distanceToHit =  std::sqrt( std::pow(delta_x, 2) + std::pow(delta_y, 2) );
+    if(distanceToHit > R) { return; }
 
     const double temp = -(k* std::pow(distanceToHit, 2))/std::pow(R, 2);
     const auto damageDone = B*std::pow(e, temp);
@@ -60,6 +61,7 @@ void Target::Damage::evalDamage(const geometry_msgs::Point::ConstPtr& targetCoor
     setDamage(m_currentDamage + damageDone );
     ROS_INFO_STREAM("- Damage: " << damageDone);
     ROS_INFO_STREAM("- Target point: x=" << targetCoord->x << " y=" << targetCoord->y);
+    ROS_INFO_STREAM("- Distance to hit: " << distanceToHit);
 }
 
 

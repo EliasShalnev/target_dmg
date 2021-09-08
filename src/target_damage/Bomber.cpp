@@ -92,8 +92,8 @@ geometry_msgs::Point::ConstPtr Bomber::evalHitPoint(const geometry_msgs::Point::
 
     geometry_msgs::Point::Ptr hitPoint(new geometry_msgs::Point);
     
-    hitPoint->x = getCoordinates()->x + dx;
-    hitPoint->y = getCoordinates()->y + dy;
+    hitPoint->x = dropPoint->x + dx;
+    hitPoint->y = dropPoint->y + dy;
 
     ROS_INFO_STREAM("Bomb parameters:");
     ROS_INFO_STREAM("- Drop point:" << " x=" << dropPoint->x 

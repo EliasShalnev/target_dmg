@@ -3,7 +3,7 @@
 
 Target::Target(const ModelName& targetName)
     : Model(targetName)
-    , m_damageSub(m_nh, "target_damage", 10)
+    , m_damageSub(m_nh, "/" + targetName + "/" + "target_damage", 10)
     , m_damage(targetName)
 { }
 

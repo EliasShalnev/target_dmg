@@ -16,6 +16,7 @@ void Observer::evalDamage(const geometry_msgs::Point::ConstPtr& hitPoint)
 {
     for(auto [_, targetModel] : m_targets)
     {
+        if( !targetModel->isActive() ) { continue; } //не расчитывать урон, если неактивный
         auto target = dynamic_cast<Target*>( targetModel.get() );
         target->evalDamage(hitPoint);
     }
@@ -25,7 +26,6 @@ void Observer::evalDamage(const geometry_msgs::Point::ConstPtr& hitPoint)
 void Observer::checkRegisteredModels(const gazebo_msgs::ModelStates::ConstPtr& modelStates) 
 {
     checkRegisteredTargets(modelStates);
-
     checkRegisteredBombers(modelStates);
 }
 

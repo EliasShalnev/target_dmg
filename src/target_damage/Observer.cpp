@@ -75,11 +75,16 @@ void Observer::checkRegisteredBombers(const gazebo_msgs::ModelStates::ConstPtr& 
             {
                 modelId = model.substr( strlen(Bomber::ral_x6) );
             }
+            else if(model.find(Bomber::orlan_cam) != std::string::npos)
+            {
+                modelId = model.substr( strlen(Bomber::orlan_cam) );
+            }
             else if( model.find(Bomber::orlan) != std::string::npos )
             {
                 modelId = model.substr( strlen(Bomber::orlan) );
             }
             else { continue; }
+            
             if(modelId == id) 
             { 
                 ROS_INFO_STREAM("New bomber \"" << bomber<< "\" was found with"

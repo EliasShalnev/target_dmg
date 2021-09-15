@@ -16,6 +16,7 @@ public:
     using BomberName = std::string;
     static constexpr char namePrefix[] = "bomber";
     static constexpr char ral_x6[] = "ral_x6";
+    static constexpr char orlan_cam[] = "orlan_cam";
     static constexpr char orlan[] = "orlan";
 
 public:
